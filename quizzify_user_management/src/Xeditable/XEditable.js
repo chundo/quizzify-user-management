@@ -11,6 +11,9 @@ export default class XEditable extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      isLoading: false
+    }
   }
   render() {
     return (
