@@ -20,6 +20,8 @@ class NewUser extends Component {
         newUserScreenName: PropTypes.string,
         newUserGroup: PropTypes.string,
         newUserCompanyId: PropTypes.number,
+
+        emailAlert: PropTypes.bool,
         
     }
     constructor(props) {
@@ -32,12 +34,20 @@ class NewUser extends Component {
             newUserGroup: '',
             newUserEmployeeId: '',
             showModal: false,
+            emailAlert: false,
         }
     }
 
     handleClose = () => {
 		this.setState({ 
-      showModal: false,
+            newUserFirstName: '',
+            newUserLastName: '',
+            newUserEmail: '',
+            newUserScreenName: '',
+            newUserGroup: '',
+            newUserEmployeeId: '',
+            showModal: false,
+            emailAlert: false,
         });
     }
 
@@ -55,7 +65,6 @@ class NewUser extends Component {
           newUserFirstName: event.target.value,
         })
     }    
-    
     handleNewLastName = (event) => {
         this.setState({
           newUserLastName: event.target.value,
@@ -83,26 +92,33 @@ class NewUser extends Component {
         })
     }
     handleCreateUser = () =>{
+        console.log(`${this.props.url}`)
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
-    
         const options = {
           method: 'POST',
           headers,
           body: JSON.stringify({"user": {"first_name":this.state.newUserFirstName,"last_name":this.state.newUserLastName,"email":this.state.newUserEmail,"screen_name":this.state.newUserScreenName,"sub_company_id":this.state.newUserGroup,"employee_id":this.state.newUserEmployeeId}}),
         }
         //console.log(options);
-        const request = new Request(`http://192.168.0.13:3000/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/  
+        const request = new Request(`${this.props.url}/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/  
         
-        fetch(request).then(response => {
-          console.log(response.status);
-        if (response.status === 200) {
-          this.setState({ showModal: false });
-          window.location.reload();
-        } else {
-          alert(`User may exist with the same information ${response.status}`);
-        }
-        }).catch(error => console.log(error));
+        this.state.newUserEmail === ''?(this.setState({
+            emailAlert:true,
+        })):(
+            fetch(request).then(response => {
+              console.log(response.status);
+            if (response.status === 200) {
+              this.setState({ showModal: false });
+              this.props.reloadUsers();
+              //window.location.reload();
+            } else {
+              alert(`User may exist with the same information. Error:${response.status}`);
+            }
+            }).catch(error => console.log(error)
+        )
+    )
+        
     }
     
     render() {
@@ -111,7 +127,6 @@ class NewUser extends Component {
             <Button bsStyle="primary" style={{marginLeft:20}} onClick={this.handleShow}>
             <Glyphicon glyph="user" /> Create new user
             </Button>
-
             <Modal show={this.state.showModal} onHide={this.handleClose}>
             <Modal.Header closeButton>
                 <Modal.Title>Create new user</Modal.Title>
@@ -156,6 +171,7 @@ class NewUser extends Component {
             </Col>
               <Col sm={8}>
                 <FormControl componentClass="select" placeholder="Select new user's group" onChange={this.handleNewGroup}>
+                <option>None</option>
                 {
                     this.props.groups.map(q => (
                     <option value={q.id} key={q.id}>
@@ -176,6 +192,13 @@ class NewUser extends Component {
             </Col>
             </FormGroup>         
             </Form>
+            {
+                this.state.emailAlert ? (
+                    <Alert bsStyle="danger">
+                    <p><strong style={{marginLeft:40}}> · Email is missing:</strong> Please enter an email</p>
+                    </Alert>
+                ):null
+            }
             </Modal.Body>
             <Modal.Footer>
               <Button bsStyle="primary" onClick={this.handleCreateUser}>Create new User</Button>

@@ -5,19 +5,12 @@ import EditableSelect from './Xeditable/EditableSelect';
 import './App.css';
 import { Button } from 'react-bootstrap';
 import { Modal } from 'react-bootstrap';
-import { Form } from 'react-bootstrap';
-import { FormGroup } from 'react-bootstrap';
-import { Col } from 'react-bootstrap';
-import { FormControl } from 'react-bootstrap';
-import { ControlLabel } from 'react-bootstrap';
-import { Alert } from 'react-bootstrap';
 import { Glyphicon } from 'react-bootstrap';
-import { Checkbox } from 'react-bootstrap';
-import { Radio } from 'react-bootstrap';
-import NewUser from './NewUser';
 
-
-
+import NewUser from './NewUser.js';
+import NewGroup from './NewGroup.js';
+import UploadXlsx from './UploadXlsx.js'
+import loader from './assets/loader.svg';
 
 class App extends Component {
   static propTypes = {
@@ -27,37 +20,34 @@ class App extends Component {
     email:PropTypes.string,
     screen_name:PropTypes.string,
     sub_company_id:PropTypes.string,
-    newGroupName: PropTypes.string,
-    newGroupAbbreviation: PropTypes.string,
     id:PropTypes.string,
-    alertVisible: PropTypes.bool,
     checkboxUpdateUsers: PropTypes.bool,
     radioUpdateByEmail: PropTypes.bool,
     addUserShowModal: PropTypes.bool,
     deleteUserShowModal: PropTypes.bool,
     tempUserDelete: PropTypes.number,
     tempUserEmail: PropTypes.string,
-
+    tempUserResendPassword: PropTypes.number,
+    sent_password_reset: PropTypes.bool,
+    url: PropTypes.string,
   };
   
   constructor(props) {
     super(props);
     this.state = {
       isLoading: true ,
-      alertVisible: false,
       showModal: false,
       showModalFileUpload: false,
       quizzifyUsers: [],
       companyGroups: [],
       newGroupName: '',
       newGroupAbbreviation: '',
-      file: null,
-      checkboxUpdateUsers: true,
-      radioUpdateByEmail: true,
-      radioUpdateByID: false,
       deleteUserShowModal: false,
       tempUserDelete: '',
+      tempUserResendPassword: '',
       empUserEmail: '',
+      sent_password_reset: false,
+      url: 'http://192.168.0.23:3000',
      };
   }
 
@@ -65,114 +55,11 @@ class App extends Component {
     this.fetchUsers();
     this.fetchGroups();
   }
-
   handleClose = () => {
 		this.setState({ 
-      showModal: false,
-      alertVisible: false,
-      showModalFileUpload: false,
-      radioUpdateByEmail: true,
       deleteUserShowModal: false,
-      file: null,
     });
 	}
-
-	handleShow = () => {                
-		this.setState({ showModal: true });
-  }
-
-  handleShowFileUpload = () => {              
-		this.setState({ showModalFileUpload: true });
-  }
-
-  handleChangeFile = (event) => {
-    this.setState({ file: event.target.files[0] }); 
-  }
-
-  handleChangeGroup = (event) => {    //get the keystrokes in the text field and updates the state
-    this.setState({
-      newGroupName: event.target.value,
-    });
-  }
-
-  handleChangeAbbre = (event) => {   //get the keystrokes in the text field and updates the state
-    this.setState({
-      newGroupAbbreviation: event.target.value,
-    });
-  }
-  handleChangeUpdateUsers = (event) => {
-    this.setState({ checkboxUpdateUsers: event.target.checked });
-    //this.setState({ checkboxUpdateUsers: !this.state.checkboxUpdateUsers });
-  }
-  handleChangeRadioByEmail = (event) => {
-    this.setState({ radioUpdateByEmail: event.target.checked });
-  }
-  handleChangeRadioByID = () => {
-    this.setState({ radioUpdateByEmail: false });
-  }
-
-  handleFileSubmit = () => {
-    const headers = new Headers();
-    //headers.append('content-type', 'multipart/form-data');
-    const formData = new FormData();
-    //console.log(this.state.file)
-    //console.log(this.state.checkboxUpdateUsers)
-    //console.log(this.state.radioUpdateByEmail)
-    formData.append('file',this.state.file);
-    formData.append('update',this.state.checkboxUpdateUsers);
-    formData.append('by_email', this.state.radioUpdateByEmail);
-
-    const options = {
-      method: 'POST',
-      headers,
-      body: formData
-    };
-    const request = new Request(`http://192.168.0.13:3000/admin/email_importer?token=5b48a186f6334844b6cb3ccbfe77250c`,options);
-    fetch(request)
-    .then(response => {
-    if (response.status === 200) {
-      this.handleClose();
-      this.fetchUsers();
-      return response.json()
-    } else {
-      alert(`Something went wrong, Please try again ... ${response.status}`);
-      throw new Error('Something went wrong on api server!');
-    }
-    }).then(
-      response => {
-        alert(`Updated users:${response.update} Created users:${response.create}`)
-        // console.log(response.update)
-        // console.log(response.create)
-      }
-    )
-    .catch(error => console.log(error))
-  }
-
-  handleGroupSubmit = () =>{
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
-
-    const options = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({"sub_company": {"company_id":"7","name":this.state.newGroupName,"abbreviation":this.state.newGroupAbbreviation}}),
-    }
-    //console.log(options);
-    const request = new Request(`http://192.168.0.13:3000/api/v2/sub_company?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/  
-    
-    this.state.newGroupName === ''&& this.state.newGroupAbbreviation === '' ? (this.setState({
-      alertVisible: true
-    })):(
-    fetch(request).then(response => {
-      console.log(response.status);
-    if (response.status === 200) {
-      this.setState({ showModal: false });
-      window.location.reload();  //Reloads the page due to limitations from XEditable to set states for select options
-    } else {
-      alert(`Group may already exist ${response.status}`);
-    }
-    }).catch(error => console.log(error)));
-  }
   handleTempUserDelete = (user_id, user_email) =>{
     this.setState({
       deleteUserShowModal: true,
@@ -190,7 +77,7 @@ class App extends Component {
       headers,
       body: JSON.stringify({ "id": this.state.tempUserDelete}),
     }
-    const request = new Request(`http://192.168.0.13:3000/api/v2/users/${this.state.tempUserDelete}?token=5b48a186f6334844b6cb3ccbfe77250c`, options);
+    const request = new Request(`${this.state.url}/api/v2/users/${this.state.tempUserDelete}?token=5b48a186f6334844b6cb3ccbfe77250c`, options);
     fetch(request).then(response =>{
       //console.log(response.status);
       if (response.status === 200) {
@@ -201,13 +88,10 @@ class App extends Component {
       }
     })
   }
-
   handleUpdate = (name, value, placeholder) => { /*Name: position in the array (i), Value: the new value to exchange, Placeholder: name of the attribute in the object to change*/
     let quizzifyUsers = this.state.quizzifyUsers;
     quizzifyUsers[name][placeholder] = value; /* name is a number to access the object, placeholder identifies the atribute to modify in the object  */
     
-    const repetedEmployeeEmail = quizzifyUsers.filter(u => u.email !== value).length === 0;
-    console.log(repetedEmployeeEmail);
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
@@ -216,7 +100,7 @@ class App extends Component {
       headers,
       body: JSON.stringify({ "user": quizzifyUsers[name]}) /*quizzifyUsers[name]*/
     }
-    const request = new Request(`http://192.168.0.13:3000/api/v2/users/${quizzifyUsers[name].id}?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/
+    const request = new Request(`${this.state.url}/api/v2/users/${quizzifyUsers[name].id}?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/
     //console.log(JSON.stringify(quizzifyUsers[name]));
     fetch(request).then(response => {
       console.log(response.status);
@@ -233,31 +117,8 @@ class App extends Component {
     console.error(error);
     });
   }
-
-  handleUploadFile = (event) => {
-    const formData = new FormData();
-    formData.append('File',event.target.files[0]);
-    fetch('http://192.168.0.13:3000/admin/email_importer?token=5b48a186f6334844b6cb3ccbfe77250c',{
-      method: 'POST',
-      headers:{
-        'content-type': 'multipart/form-data'
-      },
-      body: formData
-    }
-  ).then(response => {
-    console.log(response.status);
-  if (response.status === 200) {
-    this.setState({ showModal: false });
-  } else {
-    alert(`Something went wrong, Please try again ... ${response.status}`);
-    throw new Error('Something went wrong on api server!');
-  }
-  })
-  .catch(error => console.log(error))
-    //console.log(event.target.files[0]);
-  }
   fetchUsers = () => {
-    fetch('http://192.168.0.13:3000/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c') /*using local network for testing API*/
+    fetch(`${this.state.url}/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c`) /*using local network for testing API*/
     .then(response => response.json())
     .then(parsedJSON => parsedJSON.map(user => (
         {
@@ -270,6 +131,7 @@ class App extends Component {
           sub_company_abbreviation: `${user.sub_company_abbreviation}`,
           sub_company_id: `${user.sub_company_id}`,
           employee_id: `${user.employee_id}`,
+          sent_password_reset: false,
         }
     )))
     .then(quizzifyUsers => this.setState({
@@ -278,9 +140,8 @@ class App extends Component {
     }))
     .catch(error => console.log(JSON.stringify(error)))
   }
-
   fetchGroups = () => {
-    fetch('http://192.168.0.13:3000/api/v2/sub_company?token=5b48a186f6334844b6cb3ccbfe77250c') /*using local network for testing API*/
+    fetch(`${this.state.url}/api/v2/sub_company?token=5b48a186f6334844b6cb3ccbfe77250c`) /*using local network for testing API*/
     .then(response => response.json())
     .then(parsedJSON => parsedJSON.map(group => (
         {
@@ -294,9 +155,31 @@ class App extends Component {
     }))
     .catch(error => console.log("parsing failes", error)) 
   }
+  handleResendPassword = (user_id, user_email,i) =>{
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+    //console.log(user_id);
+    const options = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ "id": user_id}),
+    }
+    const request = new Request(`${this.state.url}/api/v2/reset_password/${user_id}?token=5b48a186f6334844b6cb3ccbfe77250c`, options);
+    fetch(request).then(response =>{
+      if (response.status === 200) {
+        let quizzifyTemp = this.state.quizzifyUsers;
+        quizzifyTemp[i].sent_password_reset = true;
+        this.setState({
+          quizzifyUsers: quizzifyTemp,
+        })
+      } else {
+        alert(`Something went wrong, Use unique name for Emails and Employee IDs ${response.status}`);
+      }
+    })
+  }
 
   render() {
-    const {isLoading, alertVisible, quizzifyUsers, companyGroups, file} = this.state;
+    const {isLoading, quizzifyUsers, companyGroups} = this.state;
     //const displayEmployeeID = quizzifyUsers.filter(u => u.employeeID !== 'null').length === 0;
     //const displayGroup = quizzifyUsers.filter(u => u.groupName !== 'null').length === 0;
     
@@ -309,78 +192,12 @@ class App extends Component {
       <div className="App">
         <h1 style={{margin:40}}>User Management Demo</h1>
         <hr/>
-        <Button bsStyle="primary" onClick={this.handleShow}>
-        <Glyphicon glyph="plus" /> Create a new Group
-				</Button>
+        <div className="TopButtons">
 
-        <NewUser groups={companyGroups} reloadUsers={this.fetchUsers}/>
-
-        <Button bsStyle="success" onClick={this.handleShowFileUpload}>
-          <Glyphicon glyph="cloud-upload" /> Upload spreadsheet
-				</Button>
-
-        <Modal show={this.state.showModalFileUpload} onHide={this.handleClose}>
-					<Modal.Header closeButton>
-						<Modal.Title>Upload spreadsheet to add/edit multiple users</Modal.Title>
-					</Modal.Header>
-				  <Modal.Body>
-          <Form horizontal>
-            <center>
-            <input className="inputfile" id="inputXLS" type="file" label='Upload' accept='.xlsx,.xls' onChange={this.handleChangeFile} />
-            <label htmlFor="inputXLS" className="btn btn-success"><Glyphicon glyph="cloud-upload" /> Select File</label> 
-            <p style={{marginTop:15}}>{file!==null?<Glyphicon glyph="file"/>:null}{file!==null?file.name:null}</p>
-            <Checkbox checked={this.state.checkboxUpdateUsers} onChange={this.handleChangeUpdateUsers}>Update existing users if applicable</Checkbox>
-            {this.state.checkboxUpdateUsers?
-            <div>
-              <Radio name="groupOptions" inline checked={this.state.radioUpdateByEmail} onChange={this.handleChangeRadioByEmail}>By Email</Radio>
-              <Radio name="groupOptions" inline onChange={this.handleChangeRadioByID}>By Employee ID</Radio>  
-            </div> 
-              :null}
-            </center>
-          </Form>
-          </Modal.Body>
-					<Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleFileSubmit} disabled={file === null} >Send File</Button>
-						<Button onClick={this.handleClose}>Close</Button>
-					</Modal.Footer>
-				</Modal>
- 
-        <Modal show={this.state.showModal} onHide={this.handleClose}>
-					<Modal.Header closeButton>
-						<Modal.Title>Create new group</Modal.Title>
-					</Modal.Header>
-					<Modal.Body>
-            <Form horizontal>
-              <FormGroup>
-              <Col componentClass={ControlLabel} sm={4}>
-                New Group Name
-			        </Col>
-              <Col sm={8}>
-				        <FormControl type="text" value={this.state.newGroupName} placeholder="Enter new group's name" onChange={this.handleChangeGroup}/>
-			        </Col>
-              </FormGroup>
-              <FormGroup>
-              <Col componentClass={ControlLabel} sm={4}>
-                Abbreviation
-			        </Col>
-              <Col sm={8}>
-				        <FormControl type="text" value={this.state.newGroupAbbreviation} placeholder="Enter new group's abbreviation" onChange={this.handleChangeAbbre}/>
-			        </Col>
-              </FormGroup>             
-            </Form>
-            {
-              alertVisible ? (
-                <Alert bsStyle="danger">
-                <p>Fill one of the previews fields before saving changes</p>
-                </Alert>
-              ) : null
-            }
-          </Modal.Body>
-					<Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleGroupSubmit}>Save changes</Button>
-						<Button onClick={this.handleClose}>Close</Button>
-					</Modal.Footer>
-				</Modal>
+        <NewGroup url={this.state.url}/>
+        <NewUser groups={companyGroups} reloadUsers={this.fetchUsers}  url={this.state.url}/>
+        <UploadXlsx reloadUsers={this.fetchUsers} url={this.state.url}/>
+        </div>
 
         <Modal show={this.state.deleteUserShowModal} onHide={this.handleClose}>
 					<Modal.Header closeButton>
@@ -388,7 +205,7 @@ class App extends Component {
 					</Modal.Header>
 					<Modal.Body>
             <center>
-            <h5>Are you sure you want to delete {`${this.state.tempUserEmail}`}?</h5>
+            <h5>Are you sure you want to delete <strong>{`${this.state.tempUserEmail}`}</strong>?</h5>
           <Button bsStyle="danger" onClick={this.handleDeleteUser} style={{margin:20}}>Delete</Button> {/*() => this.handleDeleteUser(id)*/}
 					<Button onClick={this.handleClose}>Cancel</Button>
           </center>
@@ -397,14 +214,14 @@ class App extends Component {
 
       <hr/>
     {isLoading ? (
+      <div>
       <h1>loading ...</h1>
+      <img src={loader} alt='Loading...'/>
+      </div>
     ) : (
       <table className="table table-bordered table-striped">
         <tbody>
           <tr>
-          <td>
-             Delete
-           </td>
            <td>
              First Name
            </td>
@@ -426,17 +243,15 @@ class App extends Component {
            <td>
              Reset Password
            </td>
+           <td>
+             Delete
+           </td>
           </tr>
           {
             !isLoading && quizzifyUsers.length > 0 ? quizzifyUsers.map((quizzifyUsers, i) =>{
-              const {first_name,last_name,email,screen_name,sub_company_id,sub_company_name,sub_company_abbreviation,employee_id,id} = quizzifyUsers;
+              const {first_name,last_name,email,screen_name,sub_company_id,sub_company_name,sub_company_abbreviation,employee_id,id,sent_password_reset} = quizzifyUsers;
               return <tr key={i}>
-                <td>
-                <Button bsStyle="danger" onClick={() => this.handleTempUserDelete(id,email)}>
-                  <Glyphicon glyph="trash" />
-				        </Button>
-                </td>
-                <td>
+                <td style={{paddingTop:15}}>
                   <EditableTextField
                     name={i}
                     value={first_name}
@@ -444,7 +259,7 @@ class App extends Component {
                     placeholder='first_name'
                     />
                 </td>
-                <td>
+                <td style={{paddingTop:15}}>
                   <EditableTextField
                     name={i}
                     value={last_name}
@@ -452,7 +267,7 @@ class App extends Component {
                     placeholder='last_name'
                     />
                 </td>
-                <td>
+                <td style={{paddingTop:15}}>
                   <EditableTextField
                     name={i}
                     value={email}
@@ -460,7 +275,7 @@ class App extends Component {
                     placeholder='email'
                     />
                 </td>
-                <td>
+                <td style={{paddingTop:15}}>
                   <EditableTextField
                     name={i}
                     value={screen_name===null || screen_name==='null'?'N/A':screen_name}
@@ -468,7 +283,7 @@ class App extends Component {
                     placeholder='screen_name'
                     />
                 </td>
-                <td>
+                <td style={{paddingTop:15}}>
                   <EditableSelect
                     name={i}
                     value={id}
@@ -478,7 +293,7 @@ class App extends Component {
                     options={options}
                     />
                 </td>
-                <td>
+                <td style={{paddingTop:15}}>
                   <EditableTextField
                     name={i}
                     value={employee_id===null || employee_id==='null'? 'N/A':employee_id}
@@ -486,10 +301,24 @@ class App extends Component {
                     placeholder='employee_id'
                     />
                 </td>
+                {
+              sent_password_reset ? (
+                <td style={{paddingTop:15}}>
+                <strong style={{color:'green'}}>
+                 Sent <Glyphicon glyph="ok" />
+                </strong>
+                </td>
+              ) : (
                 <td>
-                  <Button bsStyle="primary" >
-					          Send Password reset
-				          </Button>
+                 <Button bsStyle="primary" onClick={() => this.handleResendPassword(id,email,i)} >
+                  Send Password reset
+                 </Button>
+            </td>)
+            }
+            <td>
+                <Button bsStyle="danger" onClick={() => this.handleTempUserDelete(id,email)}>
+                  <Glyphicon glyph="trash" />
+				        </Button>
                 </td>
               </tr>
             }) :null
