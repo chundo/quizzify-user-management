@@ -29,7 +29,9 @@ class App extends Component {
     tempUserEmail: PropTypes.string,
     tempUserResendPassword: PropTypes.number,
     sent_password_reset: PropTypes.bool,
+    state_password_reset: PropTypes.number,
     url: PropTypes.string,
+    tokent: PropTypes.string,
   };
   
   constructor(props) {
@@ -40,14 +42,14 @@ class App extends Component {
       showModalFileUpload: false,
       quizzifyUsers: [],
       companyGroups: [],
-      newGroupName: '',
-      newGroupAbbreviation: '',
       deleteUserShowModal: false,
       tempUserDelete: '',
       tempUserResendPassword: '',
       empUserEmail: '',
       sent_password_reset: false,
+      state_password_reset: 0,
       url: 'http://192.168.0.23:3000',
+      token: '5b48a186f6334844b6cb3ccbfe77250c',
      };
   }
 
@@ -100,7 +102,7 @@ class App extends Component {
       headers,
       body: JSON.stringify({ "user": quizzifyUsers[name]}) /*quizzifyUsers[name]*/
     }
-    const request = new Request(`${this.state.url}/api/v2/users/${quizzifyUsers[name].id}?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/
+    const request = new Request(`${this.state.url}/api/v2/users/${quizzifyUsers[name].id}?token=${this.state.token}`, options); /*using local network for testing API*/
     //console.log(JSON.stringify(quizzifyUsers[name]));
     fetch(request).then(response => {
       console.log(response.status);
@@ -118,7 +120,7 @@ class App extends Component {
     });
   }
   fetchUsers = () => {
-    fetch(`${this.state.url}/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c`) /*using local network for testing API*/
+    fetch(`${this.state.url}/api/v2/users?token=${this.state.token}`) /*using local network for testing API*/
     .then(response => response.json())
     .then(parsedJSON => parsedJSON.map(user => (
         {
@@ -132,6 +134,7 @@ class App extends Component {
           sub_company_id: `${user.sub_company_id}`,
           employee_id: `${user.employee_id}`,
           sent_password_reset: false,
+          state_password_reset: 0,
         }
     )))
     .then(quizzifyUsers => this.setState({
@@ -158,16 +161,20 @@ class App extends Component {
   handleResendPassword = (user_id, user_email,i) =>{
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
-    //console.log(user_id);
     const options = {
       method: 'POST',
       headers,
       body: JSON.stringify({ "id": user_id}),
     }
+    let quizzifyTemp = this.state.quizzifyUsers;
+    quizzifyTemp[i].state_password_reset=1;
+    this.setState({
+      quizzifyUsers: quizzifyTemp,
+    })
     const request = new Request(`${this.state.url}/api/v2/reset_password/${user_id}?token=5b48a186f6334844b6cb3ccbfe77250c`, options);
     fetch(request).then(response =>{
       if (response.status === 200) {
-        let quizzifyTemp = this.state.quizzifyUsers;
+        quizzifyTemp[i].state_password_reset = 2;
         quizzifyTemp[i].sent_password_reset = true;
         this.setState({
           quizzifyUsers: quizzifyTemp,
@@ -249,7 +256,7 @@ class App extends Component {
           </tr>
           {
             !isLoading && quizzifyUsers.length > 0 ? quizzifyUsers.map((quizzifyUsers, i) =>{
-              const {first_name,last_name,email,screen_name,sub_company_id,sub_company_name,sub_company_abbreviation,employee_id,id,sent_password_reset} = quizzifyUsers;
+              const {first_name,last_name,email,screen_name,sub_company_id,sub_company_name,sub_company_abbreviation,employee_id,id,sent_password_reset,state_password_reset} = quizzifyUsers;
               return <tr key={i}>
                 <td style={{paddingTop:15}}>
                   <EditableTextField
@@ -302,6 +309,26 @@ class App extends Component {
                     />
                 </td>
                 {
+                  (() => {
+                    switch(state_password_reset) {
+                        case 0:
+                            return <td><Button bsStyle="primary" onClick={() => this.handleResendPassword(id,email,i)} >
+                            Send Password reset
+                           </Button></td>;
+                        case 1:
+                            return <td><img src={loader} alt='Loading...' width='35' height='35'/></td>;
+                        case 2:
+                            return <td style={{paddingTop:15}}>
+                            <strong style={{color:'green'}}>
+                             Sent <Glyphicon glyph="ok" />
+                            </strong>
+                            </td>;
+                        default:
+                            return null;
+                    }
+                })()
+                }
+                {/*
               sent_password_reset ? (
                 <td style={{paddingTop:15}}>
                 <strong style={{color:'green'}}>
@@ -314,7 +341,7 @@ class App extends Component {
                   Send Password reset
                  </Button>
             </td>)
-            }
+            */}
             <td>
                 <Button bsStyle="danger" onClick={() => this.handleTempUserDelete(id,email)}>
                   <Glyphicon glyph="trash" />

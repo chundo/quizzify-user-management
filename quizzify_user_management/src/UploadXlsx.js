@@ -8,12 +8,15 @@ import { Checkbox } from 'react-bootstrap';
 import { Radio } from 'react-bootstrap';
 import { Glyphicon } from 'react-bootstrap';
 
+import loader from './assets/loader.svg';
+
 export default class UploadXlsx extends Component {
     static propTypes = {
         showModalFileUpload: PropTypes.bool,
         checkboxUpdateUsers: PropTypes.bool,
         radioUpdateByEmail: PropTypes.bool,
         radioUpdateByID: PropTypes.bool,
+        isLoadingFile: PropTypes.bool,
     }
     constructor(props){
         super(props);
@@ -23,6 +26,7 @@ export default class UploadXlsx extends Component {
             checkboxUpdateUsers: true,
             radioUpdateByEmail: true,
             radioUpdateByID: false,
+            isLoadingFile: false,
         }
     }
     handleShowFileUpload = () => {              
@@ -33,6 +37,7 @@ export default class UploadXlsx extends Component {
       showModalFileUpload: false,
       radioUpdateByEmail: true,
       file: null,
+      isLoadingFile: false,
     });
 	}
     handleChangeFile = (event) => {
@@ -64,6 +69,7 @@ export default class UploadXlsx extends Component {
           headers,
           body: formData
         };
+        this.setState({ loadingFile:true})
         const request = new Request(`${this.props.url}/admin/email_importer?token=5b48a186f6334844b6cb3ccbfe77250c`,options);
         fetch(request)
         .then(response => {
@@ -109,8 +115,12 @@ export default class UploadXlsx extends Component {
             </center>
           </Form>
           </Modal.Body>
-					<Modal.Footer>
-            <Button bsStyle="primary" onClick={this.handleFileSubmit} disabled={this.state.file === null} >Send File</Button>
+					<Modal.Footer>      
+                        {this.state.isLoadingFile ? 
+                        (<img src={loader} alt='Loading...' width='50' height='50'style={{marginRight:30}}/>):
+                        (<Button bsStyle="primary" onClick={this.handleFileSubmit} disabled={this.state.file === null} >Send File</Button>)  
+                        }
+            
 						<Button onClick={this.handleClose}>Cancel</Button>
 					</Modal.Footer>
 				</Modal>

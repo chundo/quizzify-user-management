@@ -11,6 +11,7 @@ import { ControlLabel } from 'react-bootstrap';
 import { Alert } from 'react-bootstrap';
 import { Glyphicon } from 'react-bootstrap';
 
+import loader from './assets/loader.svg';
 
 class NewUser extends Component {
     static propTypes = {
@@ -22,32 +23,35 @@ class NewUser extends Component {
         newUserCompanyId: PropTypes.number,
 
         emailAlert: PropTypes.bool,
+        isLoading: PropTypes.bool,
         
     }
     constructor(props) {
         super(props);
         this.state = {
-            newUserFirstName: '',
-            newUserLastName: '',
-            newUserEmail: '',
-            newUserScreenName: '',
-            newUserGroup: '',
-            newUserEmployeeId: '',
+            newUserFirstName: undefined,
+            newUserLastName: undefined,
+            newUserEmail: undefined,
+            newUserScreenName: undefined,
+            newUserGroup: undefined,
+            newUserEmployeeId: undefined,
             showModal: false,
             emailAlert: false,
+            isLoading: false,
         }
     }
 
     handleClose = () => {
 		this.setState({ 
-            newUserFirstName: '',
-            newUserLastName: '',
-            newUserEmail: '',
-            newUserScreenName: '',
-            newUserGroup: '',
-            newUserEmployeeId: '',
+            newUserFirstName: undefined,
+            newUserLastName: undefined,
+            newUserEmail: undefined,
+            newUserScreenName: undefined,
+            newUserGroup: undefined,
+            newUserEmployeeId: undefined,
             showModal: false,
             emailAlert: false,
+            isLoading: false,
         });
     }
 
@@ -56,43 +60,49 @@ class NewUser extends Component {
     }
 
     handleNewFirstName = (event) => {
+        event.preventDefault()
         this.setState({
           newUserFirstName: event.target.value,
         })
     }
     handleNewFirstName = (event) => {
+        event.preventDefault()
         this.setState({
           newUserFirstName: event.target.value,
         })
     }    
     handleNewLastName = (event) => {
+        event.preventDefault()
         this.setState({
           newUserLastName: event.target.value,
         })
     }
 
     handleNewEmail = (event) => {
+        event.preventDefault()
         this.setState({
           newUserEmail: event.target.value,
         })
     }
     handleNewScreenName = (event) => {
+        event.preventDefault()
         this.setState({
             newUserScreenName: event.target.value,
         })
     }
     handleNewGroup = (event) => {
+        event.preventDefault()
         this.setState({
             newUserGroup: event.target.value,
         })
     }
     handleNewEmployeeID = (event) => {
+        event.preventDefault()
         this.setState({
             newUserEmployeeId: event.target.value,
         })
     }
     handleCreateUser = () =>{
-        console.log(`${this.props.url}`)
         const headers = new Headers();
         headers.append('Content-Type', 'application/json');
         const options = {
@@ -102,14 +112,17 @@ class NewUser extends Component {
         }
         //console.log(options);
         const request = new Request(`${this.props.url}/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/  
-        
-        this.state.newUserEmail === ''?(this.setState({
+        this.setState({
+            isLoading:true,
+        })
+        this.state.newUserEmail === undefined?(this.setState({
             emailAlert:true,
+            isLoading:false,
         })):(
             fetch(request).then(response => {
               console.log(response.status);
             if (response.status === 200) {
-              this.setState({ showModal: false });
+              this.handleClose();
               this.props.reloadUsers();
               //window.location.reload();
             } else {
@@ -201,7 +214,8 @@ class NewUser extends Component {
             }
             </Modal.Body>
             <Modal.Footer>
-              <Button bsStyle="primary" onClick={this.handleCreateUser}>Create new User</Button>
+                { this.state.isLoading?(<img src={loader} alt='Loading...' width='50' height='50'style={{marginRight:30}} />):(<Button bsStyle="primary" onClick={this.handleCreateUser}>Create new User</Button>)}
+              
             <Button onClick={this.handleClose}>Cancel</Button>
             </Modal.Footer>
         </Modal>
