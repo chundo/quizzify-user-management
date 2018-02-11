@@ -11,6 +11,10 @@ import NewUser from './NewUser.js';
 import NewGroup from './NewGroup.js';
 import UploadXlsx from './UploadXlsx.js'
 import loader from './assets/loader.svg';
+//JWT
+import Signin from './component/Signin';
+import Welcome from './component/Welcome';
+import { BrowserRouter as Router, Route, Link} from  'react-router-dom';
 
 class App extends Component {
   static propTypes = {
@@ -48,7 +52,7 @@ class App extends Component {
       empUserEmail: '',
       sent_password_reset: false,
       state_password_reset: 0,
-      url: 'http://192.168.0.23:3000',
+      url: 'http://localhost:3001',
       token: '5b48a186f6334844b6cb3ccbfe77250c',
      };
   }
@@ -198,6 +202,13 @@ class App extends Component {
     return (
       <div className="App">
         <h1 style={{margin:40}}>User Management Demo</h1>
+        <Router>
+          <div>
+            <Route exact path='/' component={Signin} />
+            <Route exact path='/welcome' component={Welcome} />
+          </div>
+        </Router>
+
         <hr/>
         <div className="TopButtons">
 
