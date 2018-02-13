@@ -123,7 +123,7 @@ class NewUser extends Component {
               console.log(response.status);
             if (response.status === 200) {
               this.handleClose();
-              this.props.reloadUsers();
+              this.props.reloadUsers(this.props.company_id,this.props.token);
               //window.location.reload();
             } else {
               alert(`User may exist with the same information. Error:${response.status}`);
