@@ -52,7 +52,7 @@ class App extends Component {
       empUserEmail: '',
       sent_password_reset: false,
       state_password_reset: 0,
-      url: 'http://localhost:3001',
+      url: 'http://35acbfab.ngrok.io',
       token: '5b48a186f6334844b6cb3ccbfe77250c',
      };
   }
@@ -124,7 +124,7 @@ class App extends Component {
     });
   }
   fetchUsers = () => {
-    fetch(`${this.state.url}/api/v2/users?token=${this.state.token}`) /*using local network for testing API*/
+    fetch(`${this.state.url}/api/v2/users?company=2&token=${this.state.token}`) /*using local network for testing API*/
     .then(response => response.json())
     .then(parsedJSON => parsedJSON.map(user => (
         {
@@ -148,7 +148,7 @@ class App extends Component {
     .catch(error => console.log(JSON.stringify(error)))
   }
   fetchGroups = () => {
-    fetch(`${this.state.url}/api/v2/sub_company?token=5b48a186f6334844b6cb3ccbfe77250c`) /*using local network for testing API*/
+    fetch(`${this.state.url}/api/v2/sub_company?company=2&token=5b48a186f6334844b6cb3ccbfe77250c`) /*using local network for testing API*/
     .then(response => response.json())
     .then(parsedJSON => parsedJSON.map(group => (
         {
@@ -201,7 +201,7 @@ class App extends Component {
      
     return (
       <div className="App">
-        <h1 style={{margin:40}}>User Management Demo</h1>
+       
         <Router>
           <div>
             <Route exact path='/' component={Signin} />
@@ -339,20 +339,6 @@ class App extends Component {
                     }
                 })()
                 }
-                {/*
-              sent_password_reset ? (
-                <td style={{paddingTop:15}}>
-                <strong style={{color:'green'}}>
-                 Sent <Glyphicon glyph="ok" />
-                </strong>
-                </td>
-              ) : (
-                <td>
-                 <Button bsStyle="primary" onClick={() => this.handleResendPassword(id,email,i)} >
-                  Send Password reset
-                 </Button>
-            </td>)
-            */}
             <td>
                 <Button bsStyle="danger" onClick={() => this.handleTempUserDelete(id,email)}>
                   <Glyphicon glyph="trash" />

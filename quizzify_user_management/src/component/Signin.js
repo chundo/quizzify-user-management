@@ -10,7 +10,7 @@ class Signin extends Component {
 		formData.append("username",this.inputNode1.value);
 		formData.append("password",this.inputNode2.value);
 
-		fetch("http://192.168.2.105:3001/tokens",
+		fetch("http://35acbfab.ngrok.io/token_aut",
 		{method: 'POST', body: formData})	
 		.then(res => res.json()).then(res => (console.log(res.jwt),
 		window.localStorage.setItem('jwt', res.jwt)
