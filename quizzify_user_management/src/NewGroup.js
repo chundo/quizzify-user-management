@@ -53,10 +53,10 @@ class NewGroup extends Component {
     const options = {
       method: 'POST',
       headers,
-      body: JSON.stringify({"sub_company": {"company_id":"7","name":this.state.newGroupName,"abbreviation":this.state.newGroupAbbreviation}}),
+      body: JSON.stringify({"sub_company": {"company_id":this.props.company_id,"name":this.state.newGroupName,"abbreviation":this.state.newGroupAbbreviation}}),
     }
-    //console.log(options);
-    const request = new Request(`${this.props.url}/api/v2/sub_company?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/  
+    console.log(this.props.token);
+    const request = new Request(`${this.props.url}/api/v2/sub_company?company=${this.props.company_id}&token=${this.props.token}`, options); /*using local network for testing API*/  
     
     this.state.newGroupName === ''&& this.state.newGroupAbbreviation === '' ? (this.setState({
       alertVisible: true
@@ -64,7 +64,7 @@ class NewGroup extends Component {
     fetch(request).then(response => {
       console.log(response.status);
     if (response.status === 200) {
-      this.setState({ showModal: false });
+      //this.setState({ showModal: false });
       window.location.reload();  //Reloads the page due to limitations from XEditable to set states for select options
     } else {
       alert(`Group may already exist ${response.status}`);

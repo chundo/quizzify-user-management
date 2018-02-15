@@ -70,7 +70,7 @@ export default class UploadXlsx extends Component {
           body: formData
         };
         this.setState({ isLoadingFile:true })
-        const request = new Request(`${this.props.url}/admin/email_importer?token=5b48a186f6334844b6cb3ccbfe77250c`,options);
+        const request = new Request(`${this.props.url}/admin/email_importer?company=${this.props.company_id}&token=${this.props.token}`,options);
         fetch(request)
         .then(response => {
         if (response.status === 200) {

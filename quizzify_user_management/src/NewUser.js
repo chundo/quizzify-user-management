@@ -111,7 +111,7 @@ class NewUser extends Component {
           body: JSON.stringify({"user": {"first_name":this.state.newUserFirstName,"last_name":this.state.newUserLastName,"email":this.state.newUserEmail,"screen_name":this.state.newUserScreenName,"sub_company_id":this.state.newUserGroup,"employee_id":this.state.newUserEmployeeId}}),
         }
         //console.log(options);
-        const request = new Request(`${this.props.url}/api/v2/users?token=5b48a186f6334844b6cb3ccbfe77250c`, options); /*using local network for testing API*/  
+        const request = new Request(`${this.props.url}/api/v2/users?company=${this.props.company_id}&token=${this.props.token}`, options); /*using local network for testing API*/  
         this.setState({
             isLoading:true,
         })

@@ -55,11 +55,10 @@ class Welcome extends Component {
 			sent_password_reset: false,
 			state_password_reset: 0,
 			url: 'http://35acbfab.ngrok.io',
-			token: '5b48a186f6334844b6cb3ccbfe77250c',
 		};
 	}
 
-	componentDidMount() {
+	componentWillMount() {
 		let jwt = window.localStorage.getItem('jwt');
 		let result = jwtDecode(jwt);
 		this.setState({
@@ -69,8 +68,15 @@ class Welcome extends Component {
 			company_id: result.company_id,
 		})
 		console.log(result);
-		this.fetchUsers(result.company_id,result.api_user_token);
-		this.fetchGroups(result.company_id,result.api_user_token);
+	}
+
+	handleLogOut = () => {
+		window.localStorage.removeItem('jwt').then(() => this.props.history.push('../App'));
+	}
+
+	componentDidMount() {
+		this.fetchUsers(this.state.company_id,this.state.api_user_token);
+		this.fetchGroups(this.state.company_id,this.state.api_user_token);
 	}
 
 	handleClose = () => {
@@ -219,11 +225,13 @@ class Welcome extends Component {
 		}));
 		return (
 			<div>
-				<h1 style={{ margin: 40 }}>{this.state.company_name} </h1>
+				<h1 style={{ margin: 40 }}>{this.state.company_name} </h1><Button bsStyle="danger" onClick={() => this.handleLogOut()}>
+                  <Glyphicon glyph="log-out" />
+				        </Button>
 				<hr />
 				<div className="TopButtons">
 
-					<NewGroup url={this.state.url} />
+					<NewGroup url={this.state.url} company_id={this.state.company_id} token={this.state.api_user_token}/>
 					<NewUser groups={companyGroups} reloadUsers={this.fetchUsers} url={this.state.url} company_id={this.state.company_id} token={this.state.api_user_token}/>
 					<UploadXlsx reloadUsers={this.fetchUsers} url={this.state.url} company_id={this.state.company_id} token={this.state.api_user_token}/>
 				</div>
