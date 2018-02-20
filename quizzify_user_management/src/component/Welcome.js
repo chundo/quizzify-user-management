@@ -29,7 +29,6 @@ class Welcome extends Component {
 		tempUserDelete: PropTypes.number,
 		tempUserEmail: PropTypes.string,
 		tempUserResendPassword: PropTypes.number,
-		sent_password_reset: PropTypes.bool,
 		state_password_reset: PropTypes.number,
 		url: PropTypes.string,
 		tokent: PropTypes.string,
@@ -52,9 +51,8 @@ class Welcome extends Component {
 			tempUserDelete: '',
 			tempUserResendPassword: '',
 			empUserEmail: '',
-			sent_password_reset: false,
 			state_password_reset: 0,
-			url: 'http://35acbfab.ngrok.io',
+			url: 'http://f17107d8.ngrok.io',
 		};
 	}
 
@@ -71,7 +69,8 @@ class Welcome extends Component {
 	}
 
 	handleLogOut = () => {
-		window.localStorage.removeItem('jwt').then(() => this.props.history.push('../App'));
+		window.localStorage.removeItem('jwt');
+		this.props.history.push('/');
 	}
 
 	componentDidMount() {
@@ -160,7 +159,6 @@ class Welcome extends Component {
 					sub_company_abbreviation: `${user.sub_company_abbreviation}`,
 					sub_company_id: `${user.sub_company_id}`,
 					employee_id: `${user.employee_id}`,
-					sent_password_reset: false,
 					state_password_reset: 0,
 				}
 			)))
@@ -203,7 +201,6 @@ class Welcome extends Component {
 		fetch(request).then(response => {
 			if (response.status === 200) {
 				quizzifyTemp[i].state_password_reset = 2;
-				quizzifyTemp[i].sent_password_reset = true;
 				this.setState({
 					quizzifyUsers: quizzifyTemp,
 				})
@@ -225,9 +222,11 @@ class Welcome extends Component {
 		}));
 		return (
 			<div>
-				<h1 style={{ margin: 40 }}>{this.state.company_name} </h1><Button bsStyle="danger" onClick={() => this.handleLogOut()}>
-                  <Glyphicon glyph="log-out" />
+				<div className="title" style={{ marginTop: 40 }}>
+				<h1>{this.state.company_name}</h1><Button bsStyle="danger" onClick={() => this.handleLogOut()} style={{ marginTop: 11, marginLeft:20 }}>
+                  Log Out <Glyphicon glyph="log-out" />
 				        </Button>
+								</div>
 				<hr />
 				<div className="TopButtons">
 
@@ -286,7 +285,7 @@ class Welcome extends Component {
           </tr>
           {
             !isLoading && quizzifyUsers.length > 0 ? quizzifyUsers.map((quizzifyUsers, i) =>{
-              const {first_name,last_name,email,screen_name,sub_company_id,sub_company_name,sub_company_abbreviation,employee_id,id,sent_password_reset,state_password_reset} = quizzifyUsers;
+              const {first_name,last_name,email,screen_name,sub_company_id,sub_company_name,sub_company_abbreviation,employee_id,id,state_password_reset} = quizzifyUsers;
               return <tr key={i}>
                 <td style={{paddingTop:15}}>
                   <EditableTextField
